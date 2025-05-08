@@ -27,7 +27,7 @@ class RaceParticipant(
                 currentProgress += progressIncrement
             }
         } catch (e: CancellationException) {
-            Log.e("RaceParticipant", "$name: ${e.message}")
+            // Log.e("RaceParticipant", "$name: ${e.message}")
             throw e;
         }
     }

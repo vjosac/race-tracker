@@ -3,6 +3,7 @@ package com.example.racetrackerapp
 import RaceParticipant
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
@@ -34,5 +35,39 @@ class RaceParticipantTest {
         advanceTimeBy(raceParticipant.maxProgress * raceParticipant.progressDelayMillis)
         runCurrent()
         assertEquals(100, raceParticipant.currentProgress)
+    }
+
+    @Test
+    fun raceParticipant_RacePaused_ProgressUpdated() = runTest {
+        val expectedProgress = 5
+        val racerJob = launch { raceParticipant.run() }
+        advanceTimeBy(expectedProgress * raceParticipant.progressDelayMillis)
+        runCurrent()
+        racerJob.cancelAndJoin()
+        assertEquals(expectedProgress, raceParticipant.currentProgress)
+    }
+
+    @Test
+    fun raceParticipant_RacePausedAndResumed_ProgressUpdated() = runTest {
+        val expectedProgress = 5
+
+        repeat(2) {
+            val racerJob = launch { raceParticipant.run() }
+            advanceTimeBy(expectedProgress * raceParticipant.progressDelayMillis)
+            runCurrent()
+            racerJob.cancelAndJoin()
+        }
+
+        assertEquals(expectedProgress * 2, raceParticipant.currentProgress)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun raceParticipant_ProgressIncrementZero_ExceptionThrown() = runTest {
+        RaceParticipant(name = "Progress Test", progressIncrement = 0)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun raceParticipant_MaxProgressZero_ExceptionThrown() {
+        RaceParticipant(name = "Progress Test", maxProgress = 0)
     }
 }
